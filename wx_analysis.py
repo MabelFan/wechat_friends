@@ -13,6 +13,8 @@ from wordcloud import WordCloud, ImageColorGenerator
 import gmplot
 from matplotlib.patches import Polygon
 from matplotlib.colors import rgb2hex
+import folium
+from folium.plugins import HeatMap
 
 # 初始化机器人，扫码登录
 bot = Bot()
@@ -140,6 +142,31 @@ def draw_distribution_city(data_a):
 
 draw_distribution_city(df_city_lt_nonna)
 
+draw dist_heatmap(data_h):
+	lat = np.array(data_h['纬度'])                        # 获取维度之维度值
+	lon = np.array(data_h['经度'])                        # 获取经度值
+	pop = np.array(data_h['count'],dtype=float)          # 获取人口数，转化为numpy浮点型
+
+	num = len(data_h)
+
+	data1 = [[lat[i],lon[i],pop[i]] for i in range(num)]    #将数据制作成[lats,lons,weights]的形式
+
+	map_osm = folium.Map(location=[32,110],zoom_start=5,control_scale=True)    #绘制Map，开始缩放程度是5倍
+	HeatMap(data1).add_to(map_osm)  # 将热力图添加到前面建立的map里
+	#为m添加标记部件
+	folium.Marker([24.457436,118.087517],popup='Rd. Cenxi',
+	icon=folium.Icon(icon='cloud')).add_to(map_osm)
+
+	ls = folium.PolyLine(locations=[[27.795574,114.374611],[29.833700,106.429500],\
+	[22.556396,114.110672],[24.457436,118.087517]],color='blue')
+
+	ls.add_to(map_osm)
+
+	map_osm
+	map_osm.save('friend_dist.html')     # 保存为html文件
+
+dist_heatmap(df_city_lt_nonna)
+
 def make_pro_dict(my_friends):
 	provinces = []
 	for friend in my_friends:
@@ -225,7 +252,7 @@ def draw_distribution_pro(df_p):
 	    poly = Polygon(shp,facecolor=color,edgecolor=color)
 	    ax.add_patch(poly)
 
-	plt.title('全国好友近省份分布',fontdict={'fontsize':14},loc='center')
+	plt.title('全国好友按省份分布',fontdict={'fontsize':14},loc='center')
     
 	plt.show()
 
