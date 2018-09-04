@@ -15,6 +15,7 @@ from matplotlib.patches import Polygon
 from matplotlib.colors import rgb2hex
 import folium
 from folium.plugins import HeatMap
+from collections import defaultdict
 
 # 初始化机器人，扫码登录
 bot = Bot()
@@ -24,21 +25,19 @@ my_friends = bot.friends()
 print(type(my_friends))
 
 # count the numbers of sexes and convert it into DataFrame
-def find_out_sex(my_friends):
-    sex_dict = {'male':0,'female':0,'other':0}
-    for friend in my_friends:
-        if friend.sex == 1:
+def find_out_sex(raw):
+    sex_dict = defaultdict(int)
+    for friend in raw:
+		sex = friend.sex
+        if  sex== 1:
             sex_dict['male'] += 1
-        elif friend.sex == 2:
+        elif sex == 2:
             sex_dict['female'] += 1
         else:
             sex_dict['other'] += 1
     
     df_sex = pd.DataFrame(list(sex_dict.items()),columns=['sex','count'])
-    total = df_sex['count'].sum()
-    df_sex['pct'] = df_sex['count']/total
-    
-    return df_sex
+	return df_sex
 
 df_sex = find_out_sex(my_friends)
 
@@ -52,7 +51,7 @@ def draw_pie(data):
 
 	plt.title("性别情况",fontdict={'fontsize':15},loc='center')  
 
-	plt.pie(data=data, x=data['pct'], labels=labels, autopct='%3.1f %%', radius=0.8,
+	plt.pie(data=data, x=data['count'], labels=labels, autopct='%3.1f %%', radius=0.8,
 	        labeldistance=1.1, startangle = 90, pctdistance = 0.7)
 	plt.show()
 
@@ -60,16 +59,8 @@ draw_pie(df_sex)
 
 # pull location data into DataFrame
 def obtain_city_data(my_friends):
-    # create cities list to store unique city names
-    cities = []
-    for friend in my_friends:
-        if friend.city not in cities:
-            cities.extend([friend.city])
-    
-    # create a city dictionary for number count
-    cities_dict= {}
-    for i in cities:
-        cities_dict[i] = 0
+    # create cities dict to store city names and counts of friends
+    cities_dict = defaultdict(int)
     
     # pull the numbers out into the city dictionary
     for friend in my_friends:
@@ -99,7 +90,7 @@ df_city_lt = df_city_unique.merge(city_lt_copy, how='left',\
 # delete the rows that still don't have lat and log information
 df_city_lt_nonna = df_city_lt.dropna()
 
-print("除包含经纬度为空时的数量:", df_city_lt['count'].sum(),'\n',\
+print("包含经纬度为空时的数量:", df_city_lt['count'].sum(),'\n',\
 	"去除空值之后的数量:", df_city_lt_nonna['count'].sum())
 
 # draw friends distribution by city
@@ -180,12 +171,17 @@ def make_pro_dict(my_friends):
 		pro_dict[i] = 0
 	return pro_dict
 
-pro_dict = make_pro_dict(my_friends)
+ = make_pro_dict(my_friends)
 
-def make_pro_df(my_friends, dicts):
+def make_pro_df(my_friends):
+	pro_dict = defaultdict(int)
 	for friend in my_friends:
-		if friend.province in dicts.keys():    # in case there's null value cause problem
-			dicts[friend.province] += 1
+		# in case there's null value cause problem
+		prov = friend.province
+		if prov == '':
+			pro_dict['其他'] += 1
+		else:
+			pro_dict[prov] += 1
 
 	df_pro = pd.DataFrame(list(dicts.items()), columns=['province','count'])
 	df_pro['省名'] = df_pro['province'].apply([lambda x: x.replace(" ","")])
