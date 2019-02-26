@@ -17,6 +17,9 @@ import folium
 from folium.plugins import HeatMap
 from collections import defaultdict
 
+# 设置中文显示字体
+plt.rcParams['font.sans-serif']=['Microsoft YaHei']
+
 # 初始化机器人，扫码登录
 bot = Bot()
 
@@ -26,17 +29,16 @@ print(type(my_friends))
 
 # count the numbers of sexes and convert it into DataFrame
 def find_out_sex(raw):
-    sex_dict = defaultdict(int)
-    for friend in raw:
-		sex = friend.sex
-        if  sex== 1:
-            sex_dict['male'] += 1
-        elif sex == 2:
-            sex_dict['female'] += 1
-        else:
-            sex_dict['other'] += 1
+	sex_dict = defaultdict(int)
+	for friend in raw:
+		if  friend.sex== 1:
+			sex_dict['male'] += 1
+		elif friend.sex == 2:
+			sex_dict['female'] += 1
+		else:
+			sex_dict['other'] += 1
     
-    df_sex = pd.DataFrame(list(sex_dict.items()),columns=['sex','count'])
+	df_sex = pd.DataFrame(list(sex_dict.items()),columns=['sex','count'])
 	return df_sex
 
 df_sex = find_out_sex(my_friends)
@@ -59,28 +61,28 @@ draw_pie(df_sex)
 
 # pull location data into DataFrame
 def obtain_city_data(my_friends):
-    # create cities dict to store city names and counts of friends
-    cities_dict = defaultdict(int)
+	# create cities dict to store city names and counts of friends
+	cities_dict = defaultdict(int)
     
-    # pull the numbers out into the city dictionary
-    for friend in my_friends:
-        cities_dict[friend.city] += 1
+	# pull the numbers out into the city dictionary
+	for friend in my_friends:
+		cities_dict[friend.city] += 1
     
     # convert the dictionary data into DataFrame
-    df_city = pd.DataFrame(list(cities_dict.items()),columns=['city','count'])
-    df_city['city'] = df_city['city'].apply(lambda x: 'Others' if x=='' else x)
+	df_city = pd.DataFrame(list(cities_dict.items()),columns=['city','count'])
+	df_city['city'] = df_city['city'].apply(lambda x: 'Others' if x=='' else x)
     
     # groupby column city in case there's duplicate city items.
-    df_city_unique = df_city.groupby('city').sum()
+	df_city_unique = df_city.groupby('city').sum()
     #print(df_city_unique['count'].sum())   #check the total number
-    df_city_unique = df_city_unique.reset_index()  # make sure the data is still in DataFrame
+	df_city_unique = df_city_unique.reset_index()  # make sure the data is still in DataFrame
     
-    return df_city_unique
+	return df_city_unique
 
 df_city_unique = obtain_city_data(my_friends) 
 
 # read lat/log of cities
-city_lt = pd.read_csv('/Users/mabelfan/Documents/Ipython/城市经纬度.csv')
+city_lt = pd.read_csv('/Users/mabelfan/Documents/supports/城市经纬度.csv')
 city_lt_copy = city_lt.copy()
 
 # merge city_data with lat/log info
@@ -109,9 +111,9 @@ def draw_distribution_city(data_a):
 	map.drawcoastlines()   
 	map.drawcountries()    
 
-	map.readshapefile('/Users/mabelfan/Documents/Ipython/wechatAnalysis/gadm36_CHN_shp/gadm36_CHN_1', 'states', drawbounds=True)
-	map.readshapefile('/Users/mabelfan/Documents/Ipython/wechatAnalysis/gadm36_CHN_shp/gadm36_CHN_2', 'cities', drawbounds=False)
-	map.readshapefile('/Users/mabelfan/Documents/Ipython/wechatAnalysis/gadm36_TWN_shp/gadm36_TWN_2', 'taiwan2', drawbounds=False)
+	map.readshapefile('/Users/mabelfan/Documents/Git/wx_friendAnalysis/gadm36_CHN_shp/gadm36_CHN_1', 'states', drawbounds=True)
+	map.readshapefile('/Users/mabelfan/Documents/Git/wx_friendAnalysis/gadm36_CHN_shp/gadm36_CHN_2', 'cities', drawbounds=False)
+	map.readshapefile('/Users/mabelfan/Documents/Git/wx_friendAnalysis/gadm36_TWN_shp/gadm36_TWN_2', 'taiwan2', drawbounds=False)
 	#map.drawmapboundary()
 
 	parallels = np.arange(0.,90,10.) 
@@ -133,7 +135,7 @@ def draw_distribution_city(data_a):
 
 draw_distribution_city(df_city_lt_nonna)
 
-draw dist_heatmap(data_h):
+def dist_heatmap(data_h):
 	lat = np.array(data_h['纬度'])                        # 获取维度之维度值
 	lon = np.array(data_h['经度'])                        # 获取经度值
 	pop = np.array(data_h['count'],dtype=float)          # 获取人口数，转化为numpy浮点型
@@ -158,6 +160,7 @@ draw dist_heatmap(data_h):
 
 dist_heatmap(df_city_lt_nonna)
 
+"""
 def make_pro_dict(my_friends):
 	provinces = []
 	for friend in my_friends:
@@ -171,7 +174,8 @@ def make_pro_dict(my_friends):
 		pro_dict[i] = 0
 	return pro_dict
 
- = make_pro_dict(my_friends)
+pro_dict = make_pro_dict(my_friends)
+"""
 
 def make_pro_df(my_friends):
 	pro_dict = defaultdict(int)
@@ -183,36 +187,36 @@ def make_pro_df(my_friends):
 		else:
 			pro_dict[prov] += 1
 
-	df_pro = pd.DataFrame(list(dicts.items()), columns=['province','count'])
+	df_pro = pd.DataFrame(list(pro_dict.items()), columns=['province','count'])
 	df_pro['省名'] = df_pro['province'].apply([lambda x: x.replace(" ","")])
 	df_pro.set_index('省名', inplace=True)
 	return df_pro
 
-df_pop = make_pro_df(my_friends, pro_dict)
+df_pop = make_pro_df(my_friends)
 
 def get_pro(info):
-    pro = info.split('|')
-    if len(pro) > 1:
-        s = pro[1]
-    else:
-        s = pro[0]
-    s = s[:2]
-    if s == '黑龍':
-        s = '黑龙江'
-    if s == '内蒙':
-        s = '内蒙古'
-    return s
+	pro = info.split('|')
+	if len(pro) > 1:
+		s = pro[1]
+	else:
+		s = pro[0]
+	s = s[:2]
+	if s == '黑龍':
+		s = '黑龙江'
+	if s == '内蒙':
+		s = '内蒙古'
+	return s
 
 # attention! make sure to locate the two nessary py files in the same folder
 from langconv import *
 
 def Traditional2Simplified(sentence):
-    '''
-    将sentence中的繁体字转为简体字
-    :param sentence: 待转换的句子
-    :return: 将句子中繁体字转换为简体字之后的句子
-    '''
-    return Converter('zh-hans').convert(sentence)
+	'''
+	将sentence中的繁体字转为简体字
+	:param sentence: 待转换的句子
+	:return: 将句子中繁体字转换为简体字之后的句子
+	'''
+	return Converter('zh-hans').convert(sentence)
 
 def draw_distribution_pro(df_p):
 	fig = plt.figure(figsize=(16,9))
@@ -222,9 +226,9 @@ def draw_distribution_pro(df_p):
 		projection='lcc', lat_1=33, lat_2=45, lon_0=100)
 
 # readshapefile, make sure which file you want to read in the gadm36_CHN_shp folder
-	m.readshapefile('/Users/mabelfan/Documents/Ipython/wechatAnalysis/gadm36_CHN_shp/gadm36_CHN_1', 'states', drawbounds=True)
+	m.readshapefile('/Users/mabelfan/Documents/Git/wx_friendAnalysis/gadm36_CHN_shp/gadm36_CHN_1', 'states', drawbounds=True)
 
-	m.readshapefile('/Users/mabelfan/Documents/Ipython/wechatAnalysis/gadm36_TWN_shp/gadm36_TWN_0', 'taiwan', drawbounds=True)
+	m.readshapefile('/Users/mabelfan/Documents/Git/wx_friendAnalysis/gadm36_TWN_shp/gadm36_TWN_0', 'taiwan', drawbounds=True)
 
 	cmap = plt.cm.YlOrRd
 	vmax = 1500
@@ -232,21 +236,21 @@ def draw_distribution_pro(df_p):
 
 	ax = plt.gca()
 	for info, shp in zip(m.states_info, m.states):
-	    state = info['NL_NAME_1']
-	    proid = get_pro(state)
-	    if proid not in df_p['province']:
-	        pop = 0
-	    else:
-	        pop = df_p['count'][proid]*10
-	    color = rgb2hex(cmap(np.sqrt((pop - vmin) / (vmax - vmin)))[:3])
-	    poly = Polygon(shp,facecolor=color,edgecolor=color)
-	    ax.add_patch(poly)
+		state = info['NL_NAME_1']
+		proid = get_pro(state)
+		if proid not in df_p['province']:
+			pop = 0
+		else:
+			pop = df_p['count'][proid]*10
+		color = rgb2hex(cmap(np.sqrt((pop - vmin) / (vmax - vmin)))[:3])
+		poly = Polygon(shp,facecolor=color,edgecolor=color)
+		ax.add_patch(poly)
 
 	for nshape, shp in enumerate(m.taiwan):
-	    pop = df_p['count']['台湾']*10
-	    color = rgb2hex(cmap(np.sqrt((pop - vmin) / (vmax - vmin)))[:3])
-	    poly = Polygon(shp,facecolor=color,edgecolor=color)
-	    ax.add_patch(poly)
+		pop = df_p['count']['台湾']*10
+		color = rgb2hex(cmap(np.sqrt((pop - vmin) / (vmax - vmin)))[:3])
+		poly = Polygon(shp,facecolor=color,edgecolor=color)
+		ax.add_patch(poly)
 
 	plt.title('全国好友按省份分布',fontdict={'fontsize':14},loc='center')
     
@@ -274,7 +278,7 @@ full_sign = obtain_signatures(my_friends)
 
 # use jieba to cut sentences
 def cut_to_words(text):
-	stopwords = {}.fromkeys([line.rstrip() for line in open('/Users/mabelfan/Documents/Ipython/stopwords.txt','r')])
+	stopwords = {}.fromkeys([line.rstrip() for line in open('/Users/mabelfan/Documents/supports/stopwords.txt','r')])
 	wordlist_jieba = jieba.cut(text, cut_all=False)
 
 	#wl_space_split = " ".join(wordlist_jieba)
